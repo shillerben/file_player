@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 
 class FileInfo {
   const FileInfo({required this.thumbnail, required this.file});
@@ -22,6 +23,7 @@ class PlayerScreen extends StatefulWidget {
 class _PlayerScreenState extends State<PlayerScreen> {
   var _curIdx = 0;
   late VideoPlayerController _controller;
+  late ChewieController _chewieController;
   late Future<void> _initializeVideoPlayerFuture;
 
   @override
@@ -40,42 +42,29 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _chewieController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    var fileToPlay = widget.playQueue[_curIdx].file;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(fileToPlay.path),
-      ),
+      appBar: AppBar(),
       body: FutureBuilder(
         future: _initializeVideoPlayerFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            return AspectRatio(
+            _chewieController = ChewieController(
+              videoPlayerController: _controller,
               aspectRatio: _controller.value.aspectRatio,
-              child: VideoPlayer(_controller),
+              autoInitialize: false,
+              autoPlay: true,
             );
+            return Chewie(controller: _chewieController);
           } else {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            _controller.value.isPlaying
-                ? _controller.pause()
-                : _controller.play();
-          });
-        },
-        child: Icon(
-          _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-        ),
       ),
     );
   }

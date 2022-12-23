@@ -79,8 +79,8 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _addFileToQueue,
+            icon: const Icon(Icons.play_arrow),
+            onPressed: _play,
           ),
         ],
       ),
@@ -102,9 +102,9 @@ class _MyHomePageState extends State<MyHomePage> {
             : const Text("Queue is empty :("),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _play,
-        tooltip: 'Play',
-        child: const Icon(Icons.play_arrow),
+        onPressed: _addFileToQueue,
+        tooltip: 'Add File',
+        child: const Icon(Icons.add),
       ),
     );
   }
