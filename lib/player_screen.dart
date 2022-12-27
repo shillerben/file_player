@@ -25,17 +25,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
   late VideoPlayerController _controller;
   late ChewieController _chewieController;
   late Future<void> _initializeVideoPlayerFuture;
+  final _videoPlayerOpts = VideoPlayerOptions(allowBackgroundPlayback: true);
 
   @override
   void initState() {
     super.initState();
 
-    final opts = VideoPlayerOptions(allowBackgroundPlayback: true);
-
     File fileToPlay = widget.playQueue[_curIdx].file;
 
-    _controller =
-        VideoPlayerController.file(fileToPlay, videoPlayerOptions: opts);
+    _controller = VideoPlayerController.file(fileToPlay,
+        videoPlayerOptions: _videoPlayerOpts);
     _initializeVideoPlayerFuture = _controller.initialize();
   }
 
@@ -44,6 +43,33 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _controller.dispose();
     _chewieController.dispose();
     super.dispose();
+  }
+
+  void _newVideo() {
+    setState(() {
+      _controller.dispose();
+      _chewieController.dispose();
+
+      File fileToPlay = widget.playQueue[_curIdx].file;
+
+      _controller = VideoPlayerController.file(fileToPlay,
+          videoPlayerOptions: _videoPlayerOpts);
+      _initializeVideoPlayerFuture = _controller.initialize();
+    });
+  }
+
+  void _next() {
+    if (_curIdx + 1 < widget.playQueue.length) {
+      _curIdx++;
+      _newVideo();
+    }
+  }
+
+  void _prev() {
+    if (_curIdx > 0) {
+      _curIdx--;
+      _newVideo();
+    }
   }
 
   @override
@@ -59,12 +85,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
               aspectRatio: _controller.value.aspectRatio,
               autoInitialize: false,
               autoPlay: true,
+              controlsSafeAreaMinimum: const EdgeInsets.only(bottom: 25.0),
             );
             return Chewie(controller: _chewieController);
           } else {
             return const Center(child: CircularProgressIndicator());
           }
         },
+      ),
+      bottomNavigationBar: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(onPressed: _prev, icon: const Icon(Icons.skip_previous)),
+          IconButton(onPressed: _next, icon: const Icon(Icons.skip_next)),
+        ],
       ),
     );
   }
