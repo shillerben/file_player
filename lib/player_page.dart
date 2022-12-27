@@ -1,20 +1,13 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
-
-class FileInfo {
-  const FileInfo({required this.thumbnail, required this.file});
-
-  final Uint8List thumbnail;
-  final File file;
-}
+import 'queue_model.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key, required this.playQueue});
 
-  final List<FileInfo> playQueue;
+  final QueueModel playQueue;
 
   @override
   State<PlayerScreen> createState() => _PlayerScreenState();
@@ -31,7 +24,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void initState() {
     super.initState();
 
-    File fileToPlay = widget.playQueue[_curIdx].file;
+    File fileToPlay = widget.playQueue.at(_curIdx).file;
 
     _controller = VideoPlayerController.file(fileToPlay,
         videoPlayerOptions: _videoPlayerOpts);
@@ -50,7 +43,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _controller.dispose();
       _chewieController.dispose();
 
-      File fileToPlay = widget.playQueue[_curIdx].file;
+      File fileToPlay = widget.playQueue.at(_curIdx).file;
 
       _controller = VideoPlayerController.file(fileToPlay,
           videoPlayerOptions: _videoPlayerOpts);
@@ -87,18 +80,25 @@ class _PlayerScreenState extends State<PlayerScreen> {
               autoPlay: true,
               controlsSafeAreaMinimum: const EdgeInsets.only(bottom: 25.0),
             );
-            return Chewie(controller: _chewieController);
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Chewie(controller: _chewieController),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(onPressed: _prev, child: const Text("Previous")),
+                    TextButton(onPressed: _next, child: const Text("Next")),
+                    // IconButton(onPressed: _prev, icon: const Icon(Icons.skip_previous)),
+                    // IconButton(onPressed: _next, icon: const Icon(Icons.skip_next)),
+                  ],
+                ),
+              ],
+            );
           } else {
             return const Center(child: CircularProgressIndicator());
           }
         },
-      ),
-      bottomNavigationBar: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(onPressed: _prev, icon: const Icon(Icons.skip_previous)),
-          IconButton(onPressed: _next, icon: const Icon(Icons.skip_next)),
-        ],
       ),
     );
   }
