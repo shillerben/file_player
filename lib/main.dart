@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'player_screen.dart';
 
 void main() {
@@ -91,9 +92,26 @@ class _MyHomePageState extends State<MyHomePage> {
                 onReorder: _reorderQueue,
                 itemBuilder: (context, idx) {
                   if (idx < _queue.length) {
-                    return ListTile(
+                    return Slidable(
                       key: Key('$idx'),
-                      title: Text(_queue[idx].file.path),
+                      endActionPane: ActionPane(
+                        motion: const ScrollMotion(),
+                        extentRatio: 0.2,
+                        children: [
+                          SlidableAction(
+                            onPressed: (context) {
+                              setState(() {
+                                _queue.removeAt(idx);
+                              });
+                            },
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                          )
+                        ],
+                      ),
+                      child: ListTile(
+                          title: Text(_queue[idx].file.uri.pathSegments.last)),
                     );
                   }
                   return const ListTile();
