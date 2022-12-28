@@ -78,22 +78,28 @@ class _PlayerScreenState extends State<PlayerScreen> {
               aspectRatio: _controller.value.aspectRatio,
               autoInitialize: false,
               autoPlay: true,
-              controlsSafeAreaMinimum: const EdgeInsets.only(bottom: 25.0),
+              // controlsSafeAreaMinimum: const EdgeInsets.only(bottom: 25.0),
             );
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Chewie(controller: _chewieController),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(onPressed: _prev, child: const Text("Previous")),
-                    TextButton(onPressed: _next, child: const Text("Next")),
-                    // IconButton(onPressed: _prev, icon: const Icon(Icons.skip_previous)),
-                    // IconButton(onPressed: _next, icon: const Icon(Icons.skip_next)),
-                  ],
-                ),
-              ],
+            return Container(
+              margin: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Chewie(controller: _chewieController),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton(
+                          onPressed: _prev, child: const Text("Previous")),
+                      TextButton(onPressed: _next, child: const Text("Next")),
+                      // IconButton(onPressed: _prev, icon: const Icon(Icons.skip_previous)),
+                      // IconButton(onPressed: _next, icon: const Icon(Icons.skip_next)),
+                    ],
+                  ),
+                ],
+              ),
             );
           } else {
             return const Center(child: CircularProgressIndicator());
