@@ -81,7 +81,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
               // controlsSafeAreaMinimum: const EdgeInsets.only(bottom: 25.0),
             );
             return Container(
-              margin: const EdgeInsets.all(8.0),
+              color: Theme.of(context).colorScheme.background,
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

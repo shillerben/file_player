@@ -18,8 +18,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'File Player',
       theme: ThemeData(
-        primarySwatch: Colors.cyan,
-      ),
+          colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.cyan, brightness: Brightness.dark)),
       home: Consumer<QueueModel>(builder: (context, queue, child) {
         return MyHomePage(title: 'File Player', queue: queue);
       }),
