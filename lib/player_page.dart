@@ -1,4 +1,5 @@
 import 'package:audio_session/audio_session.dart';
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -16,6 +17,7 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
+  int curIdx = 0;
   bool _paused = false;
   bool _shuffleEnabled = false;
   LoopMode _loopMode = LoopMode.all;
@@ -103,6 +105,32 @@ class _PlayerScreenState extends State<PlayerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            StreamBuilder<int?>(
+              stream: _player.currentIndexStream,
+              builder: ((context, snapshot) {
+                final idx = snapshot.data ?? 0;
+                final filename =
+                    widget.playQueue.at(idx).file.uri.pathSegments.last;
+                return Text(filename);
+              }),
+            ),
+            Container(
+              margin: const EdgeInsets.all(16.0),
+              child: StreamBuilder<Duration>(
+                stream: _player.positionStream,
+                builder: ((context, snapshot) {
+                  final progress = snapshot.data ?? Duration.zero;
+                  final total = _player.duration ?? Duration.zero;
+                  final buffered = _player.bufferedPosition;
+                  return ProgressBar(
+                    progress: progress,
+                    buffered: buffered,
+                    total: total,
+                    onSeek: (duration) => _player.seek(duration),
+                  );
+                }),
+              ),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -123,12 +151,22 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ),
                 IconButton(
                     onPressed: _prev, icon: const Icon(Icons.skip_previous)),
-                _paused
-                    ? IconButton(
-                        onPressed: _play, icon: const Icon(Icons.play_circle))
-                    : IconButton(
-                        onPressed: _pause,
-                        icon: const Icon(Icons.pause_circle)),
+                Container(
+                  decoration: ShapeDecoration(
+                      shape: const CircleBorder(),
+                      color: Theme.of(context).colorScheme.onBackground),
+                  child: _paused
+                      ? IconButton(
+                          onPressed: _play,
+                          icon: const Icon(Icons.play_arrow),
+                          color: Theme.of(context).colorScheme.background,
+                        )
+                      : IconButton(
+                          onPressed: _pause,
+                          icon: const Icon(Icons.pause),
+                          color: Theme.of(context).colorScheme.background,
+                        ),
+                ),
                 IconButton(onPressed: _next, icon: const Icon(Icons.skip_next)),
                 Container(
                   decoration: ShapeDecoration(
