@@ -1,16 +1,7 @@
 # file_player
 
-A new Flutter project.
+An Audio Player for ios and android that plays audio and video files from the file system.
 
-## Getting Started
+File Player supports making a queue of files to play and can play in the background and on the lock screen.
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+I got tired of the Files app on ios, so I made this.
