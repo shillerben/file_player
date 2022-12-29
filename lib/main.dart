@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'home_page.dart';
 import 'queue_model.dart';
 
-void main() {
+Future<void> main() async {
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.shillerben.file_player',
+    androidNotificationChannelName: 'File Player',
+    androidNotificationOngoing: true,
+  );
   runApp(ChangeNotifierProvider(
     create: (context) => QueueModel(),
     child: const MyApp(),

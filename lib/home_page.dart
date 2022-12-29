@@ -39,10 +39,6 @@ class MyHomePage extends StatelessWidget {
     };
   }
 
-  void _reorderQueue(int idxStart, int idxEnd) {
-    queue.moveItemAt(idxStart, idxEnd);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,7 +55,7 @@ class MyHomePage extends StatelessWidget {
         child: queue.isNotEmpty
             ? ReorderableListView.builder(
                 itemCount: queue.length,
-                onReorder: _reorderQueue,
+                onReorder: queue.moveItemAt,
                 itemBuilder: (context, idx) {
                   if (idx < queue.length) {
                     return Slidable(

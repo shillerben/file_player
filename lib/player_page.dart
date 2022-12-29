@@ -1,7 +1,9 @@
-import 'dart:io';
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
-import 'package:chewie/chewie.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
+// import 'package:video_player/video_player.dart';
+// import 'package:chewie/chewie.dart';
 import 'queue_model.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -14,98 +16,140 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
-  var _curIdx = 0;
-  late VideoPlayerController _controller;
-  late ChewieController _chewieController;
-  late Future<void> _initializeVideoPlayerFuture;
-  final _videoPlayerOpts = VideoPlayerOptions(allowBackgroundPlayback: true);
+  bool _paused = false;
+  bool _shuffleEnabled = false;
+  LoopMode _loopMode = LoopMode.all;
+  late AudioPlayer _player;
+  late ConcatenatingAudioSource _playlist;
 
   @override
   void initState() {
     super.initState();
 
-    File fileToPlay = widget.playQueue.at(_curIdx).file;
+    _player = AudioPlayer();
+    _playlist = ConcatenatingAudioSource(
+        children: widget.playQueue.queue
+            .map((element) => AudioSource.uri(element.file.uri,
+                tag: MediaItem(
+                  id: element.file.path,
+                  title: element.file.uri.pathSegments.last,
+                )))
+            .toList());
+    _player.setLoopMode(LoopMode.all).then((value) {
+      _player.setAudioSource(_playlist,
+          initialIndex: 0, initialPosition: Duration.zero);
+    }).then((value) => _player.play());
 
-    _controller = VideoPlayerController.file(fileToPlay,
-        videoPlayerOptions: _videoPlayerOpts);
-    _initializeVideoPlayerFuture = _controller.initialize();
+    AudioSession.instance.then((session) {
+      session.configure(const AudioSessionConfiguration.speech());
+    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
-    _chewieController.dispose();
+    _player.dispose();
     super.dispose();
   }
 
-  void _newVideo() {
+  void _toggleShuffle() async {
     setState(() {
-      _controller.dispose();
-      _chewieController.dispose();
-
-      File fileToPlay = widget.playQueue.at(_curIdx).file;
-
-      _controller = VideoPlayerController.file(fileToPlay,
-          videoPlayerOptions: _videoPlayerOpts);
-      _initializeVideoPlayerFuture = _controller.initialize();
+      _shuffleEnabled = !_shuffleEnabled;
     });
+    await _player.setShuffleModeEnabled(_shuffleEnabled);
   }
 
-  void _next() {
-    if (_curIdx + 1 < widget.playQueue.length) {
-      _curIdx++;
-      _newVideo();
-    }
+  void _toggleLoopMode() async {
+    setState(() {
+      if (_loopMode == LoopMode.off) {
+        _loopMode = LoopMode.all;
+      } else if (_loopMode == LoopMode.all) {
+        _loopMode = LoopMode.one;
+      } else {
+        _loopMode = LoopMode.off;
+      }
+    });
+    await _player.setLoopMode(_loopMode);
   }
 
-  void _prev() {
-    if (_curIdx > 0) {
-      _curIdx--;
-      _newVideo();
-    }
+  void _pause() async {
+    setState(() {
+      _paused = true;
+    });
+    await _player.pause();
+  }
+
+  void _play() async {
+    setState(() {
+      _paused = false;
+    });
+    await _player.play();
+  }
+
+  void _next() async {
+    await _player.seekToNext();
+  }
+
+  void _prev() async {
+    await _player.seekToPrevious();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: FutureBuilder(
-        future: _initializeVideoPlayerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            _chewieController = ChewieController(
-              videoPlayerController: _controller,
-              aspectRatio: _controller.value.aspectRatio,
-              autoInitialize: false,
-              autoPlay: true,
-              // controlsSafeAreaMinimum: const EdgeInsets.only(bottom: 25.0),
-            );
-            return Container(
-              color: Theme.of(context).colorScheme.background,
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Chewie(controller: _chewieController),
+      body: Container(
+        color: Theme.of(context).colorScheme.background,
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Container(
+                  decoration: ShapeDecoration(
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10))),
+                      color: _shuffleEnabled
+                          ? Theme.of(context).colorScheme.onBackground
+                          : Theme.of(context).colorScheme.background),
+                  child: IconButton(
+                    onPressed: _toggleShuffle,
+                    color: _shuffleEnabled
+                        ? Theme.of(context).colorScheme.background
+                        : Theme.of(context).colorScheme.onBackground,
+                    icon: const Icon(Icons.shuffle),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      TextButton(
-                          onPressed: _prev, child: const Text("Previous")),
-                      TextButton(onPressed: _next, child: const Text("Next")),
-                      // IconButton(onPressed: _prev, icon: const Icon(Icons.skip_previous)),
-                      // IconButton(onPressed: _next, icon: const Icon(Icons.skip_next)),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
+                ),
+                IconButton(
+                    onPressed: _prev, icon: const Icon(Icons.skip_previous)),
+                _paused
+                    ? IconButton(
+                        onPressed: _play, icon: const Icon(Icons.play_circle))
+                    : IconButton(
+                        onPressed: _pause,
+                        icon: const Icon(Icons.pause_circle)),
+                IconButton(onPressed: _next, icon: const Icon(Icons.skip_next)),
+                Container(
+                  decoration: ShapeDecoration(
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10))),
+                      color: _loopMode == LoopMode.off
+                          ? Theme.of(context).colorScheme.background
+                          : Theme.of(context).colorScheme.onBackground),
+                  child: IconButton(
+                      onPressed: _toggleLoopMode,
+                      color: _loopMode == LoopMode.off
+                          ? Theme.of(context).colorScheme.onBackground
+                          : Theme.of(context).colorScheme.background,
+                      icon: _loopMode == LoopMode.one
+                          ? const Icon(Icons.repeat_one)
+                          : const Icon(Icons.repeat)),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
