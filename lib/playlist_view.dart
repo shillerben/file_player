@@ -3,15 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
 class PlaylistView extends StatelessWidget {
-  const PlaylistView({super.key, required this.queue});
+  const PlaylistView({super.key, required this.queue, this.startIdx = 0});
 
   final QueueModel queue;
+  final int startIdx;
 
   @override
   Widget build(BuildContext context) {
+    /// Need to add the startIdx to onReorder call
+    void Function(int, int) genMoveFunc() {
+      return ((p0, p1) => queue.moveItemAt(startIdx + p0, startIdx + p1));
+    }
+
     return ReorderableListView.builder(
-      itemCount: queue.length,
-      onReorder: queue.moveItemAt,
+      itemCount: queue.length - startIdx,
+      onReorder: genMoveFunc(),
       itemBuilder: (context, idx) {
         if (idx < queue.length) {
           return Slidable(
@@ -22,7 +28,7 @@ class PlaylistView extends StatelessWidget {
               children: [
                 SlidableAction(
                   onPressed: (context) {
-                    queue.removeAt(idx);
+                    queue.removeAt(startIdx + idx);
                   },
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
@@ -30,8 +36,9 @@ class PlaylistView extends StatelessWidget {
                 )
               ],
             ),
-            child:
-                ListTile(title: Text(queue.at(idx).file.uri.pathSegments.last)),
+            child: ListTile(
+                title:
+                    Text(queue.at(startIdx + idx).file.uri.pathSegments.last)),
           );
         }
         return const ListTile();

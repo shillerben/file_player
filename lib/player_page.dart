@@ -1,8 +1,8 @@
 import 'package:audio_session/audio_session.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import 'package:file_player/playlist_view.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 // import 'package:video_player/video_player.dart';
 // import 'package:chewie/chewie.dart';
 import 'queue_model.dart';
@@ -22,23 +22,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _shuffleEnabled = false;
   LoopMode _loopMode = LoopMode.all;
   late AudioPlayer _player;
-  late ConcatenatingAudioSource _playlist;
 
   @override
   void initState() {
     super.initState();
 
     _player = AudioPlayer();
-    _playlist = ConcatenatingAudioSource(
-        children: widget.playQueue.queue
-            .map((element) => AudioSource.uri(element.file.uri,
-                tag: MediaItem(
-                  id: element.file.path,
-                  title: element.file.uri.pathSegments.last,
-                )))
-            .toList());
     _player.setLoopMode(LoopMode.all).then((value) {
-      _player.setAudioSource(_playlist,
+      _player.setAudioSource(widget.playQueue.playlist,
           initialIndex: 0, initialPosition: Duration.zero);
     }).then((value) => _player.play());
 
@@ -97,6 +88,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    void Function() showPlaylistSheet(BuildContext context) {
+      return () {
+        Scaffold.of(context).showBottomSheet((context) {
+          return StreamBuilder(
+              stream: _player.currentIndexStream,
+              builder: ((context, snapshot) {
+                return PlaylistView(
+                  queue: widget.playQueue,
+                  startIdx: (snapshot.data ?? 0) + 1,
+                );
+              }));
+        });
+      };
+    }
+
     return Scaffold(
       appBar: AppBar(),
       body: Container(
@@ -111,7 +117,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 final idx = snapshot.data ?? 0;
                 final filename =
                     widget.playQueue.at(idx).file.uri.pathSegments.last;
-                return Text(filename);
+                return Text(
+                  filename,
+                  textAlign: TextAlign.center,
+                );
               }),
             ),
             Container(
@@ -132,7 +141,38 @@ class _PlayerScreenState extends State<PlayerScreen> {
               ),
             ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                    iconSize: (IconTheme.of(context).size ?? 24.0) * 2,
+                    onPressed: _prev,
+                    icon: const Icon(Icons.skip_previous)),
+                Container(
+                  decoration: ShapeDecoration(
+                      shape: const CircleBorder(),
+                      color: Theme.of(context).colorScheme.onBackground),
+                  child: _paused
+                      ? IconButton(
+                          iconSize: (IconTheme.of(context).size ?? 24.0) * 2,
+                          onPressed: _play,
+                          icon: const Icon(Icons.play_arrow),
+                          color: Theme.of(context).colorScheme.background,
+                        )
+                      : IconButton(
+                          iconSize: (IconTheme.of(context).size ?? 24.0) * 2,
+                          onPressed: _pause,
+                          icon: const Icon(Icons.pause),
+                          color: Theme.of(context).colorScheme.background,
+                        ),
+                ),
+                IconButton(
+                    iconSize: (IconTheme.of(context).size ?? 24.0) * 2,
+                    onPressed: _next,
+                    icon: const Icon(Icons.skip_next)),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
                   decoration: ShapeDecoration(
@@ -149,25 +189,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     icon: const Icon(Icons.shuffle),
                   ),
                 ),
-                IconButton(
-                    onPressed: _prev, icon: const Icon(Icons.skip_previous)),
-                Container(
-                  decoration: ShapeDecoration(
-                      shape: const CircleBorder(),
-                      color: Theme.of(context).colorScheme.onBackground),
-                  child: _paused
-                      ? IconButton(
-                          onPressed: _play,
-                          icon: const Icon(Icons.play_arrow),
-                          color: Theme.of(context).colorScheme.background,
-                        )
-                      : IconButton(
-                          onPressed: _pause,
-                          icon: const Icon(Icons.pause),
-                          color: Theme.of(context).colorScheme.background,
-                        ),
-                ),
-                IconButton(onPressed: _next, icon: const Icon(Icons.skip_next)),
                 Container(
                   decoration: ShapeDecoration(
                       shape: const RoundedRectangleBorder(
@@ -186,6 +207,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ),
               ],
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Builder(builder: (context) {
+                  return IconButton(
+                    onPressed: showPlaylistSheet(context),
+                    icon: const Icon(Icons.queue_music),
+                  );
+                }),
+              ],
+            )
           ],
         ),
       ),
