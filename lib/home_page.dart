@@ -55,7 +55,10 @@ class MyHomePage extends StatelessWidget {
       body: Center(
         child: queue.isNotEmpty
             ? PlaylistView(queue: queue)
-            : const Text("Queue is empty :("),
+            : const Text(
+                "Queue is empty :(",
+                textScaleFactor: 1.25,
+              ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addFileToQueue,
