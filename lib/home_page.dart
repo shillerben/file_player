@@ -1,8 +1,8 @@
 import 'dart:io';
+import 'package:file_player/playlist_view.dart';
 import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'player_page.dart';
 import 'queue_model.dart';
 
@@ -45,6 +45,7 @@ class MyHomePage extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
         actions: [
+          IconButton(onPressed: queue.clear, icon: const Icon(Icons.delete)),
           IconButton(
             icon: const Icon(Icons.play_arrow),
             onPressed: _play(context),
@@ -53,35 +54,7 @@ class MyHomePage extends StatelessWidget {
       ),
       body: Center(
         child: queue.isNotEmpty
-            ? ReorderableListView.builder(
-                itemCount: queue.length,
-                onReorder: queue.moveItemAt,
-                itemBuilder: (context, idx) {
-                  if (idx < queue.length) {
-                    return Slidable(
-                      key: Key('$idx'),
-                      endActionPane: ActionPane(
-                        motion: const ScrollMotion(),
-                        extentRatio: 0.2,
-                        children: [
-                          SlidableAction(
-                            onPressed: (context) {
-                              queue.removeAt(idx);
-                            },
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                            icon: Icons.delete,
-                          )
-                        ],
-                      ),
-                      child: ListTile(
-                          title:
-                              Text(queue.at(idx).file.uri.pathSegments.last)),
-                    );
-                  }
-                  return const ListTile();
-                },
-              )
+            ? PlaylistView(queue: queue)
             : const Text("Queue is empty :("),
       ),
       floatingActionButton: FloatingActionButton(

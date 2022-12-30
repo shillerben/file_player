@@ -35,6 +35,11 @@ class QueueModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clear() {
+    _queue.clear();
+    notifyListeners();
+  }
+
   void moveItemAt(int idxStart, int idxEnd) {
     if (idxStart < idxEnd) {
       idxEnd -= 1;
