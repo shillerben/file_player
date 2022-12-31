@@ -64,26 +64,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
     await _player.setLoopMode(_loopMode);
   }
 
-  void _pause() async {
-    setState(() {
-      _paused = true;
-    });
-    await _player.pause();
+  void _pause() {
+    _player.pause();
   }
 
-  void _play() async {
-    setState(() {
-      _paused = false;
-    });
-    await _player.play();
+  void _play() {
+    _player.play();
   }
 
-  void _next() async {
-    await _player.seekToNext();
+  void _next() {
+    _player.seekToNext();
   }
 
-  void _prev() async {
-    await _player.seekToPrevious();
+  void _prev() {
+    _player.seekToPrevious();
   }
 
   @override
@@ -143,32 +137,52 @@ class _PlayerScreenState extends State<PlayerScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(
-                    iconSize: (IconTheme.of(context).size ?? 24.0) * 2,
-                    onPressed: _prev,
-                    icon: const Icon(Icons.skip_previous)),
+                /// Previous button
+                StreamBuilder(
+                    stream: _player.currentIndexStream,
+                    builder: ((context, snapshot) {
+                      return IconButton(
+                          iconSize: (IconTheme.of(context).size ?? 24.0) * 2,
+                          onPressed: _player.hasPrevious ? _prev : null,
+                          icon: const Icon(Icons.skip_previous));
+                    })),
+
+                /// Play button
                 Container(
                   decoration: ShapeDecoration(
                       shape: const CircleBorder(),
                       color: Theme.of(context).colorScheme.onBackground),
-                  child: _paused
-                      ? IconButton(
-                          iconSize: (IconTheme.of(context).size ?? 24.0) * 2,
-                          onPressed: _play,
-                          icon: const Icon(Icons.play_arrow),
-                          color: Theme.of(context).colorScheme.background,
-                        )
-                      : IconButton(
-                          iconSize: (IconTheme.of(context).size ?? 24.0) * 2,
-                          onPressed: _pause,
-                          icon: const Icon(Icons.pause),
-                          color: Theme.of(context).colorScheme.background,
-                        ),
+                  child: StreamBuilder(
+                    stream: _player.playingStream,
+                    builder: (context, snapshot) {
+                      return snapshot.data ?? false
+                          ? IconButton(
+                              iconSize:
+                                  (IconTheme.of(context).size ?? 24.0) * 2,
+                              onPressed: _pause,
+                              icon: const Icon(Icons.pause),
+                              color: Theme.of(context).colorScheme.background,
+                            )
+                          : IconButton(
+                              iconSize:
+                                  (IconTheme.of(context).size ?? 24.0) * 2,
+                              onPressed: _play,
+                              icon: const Icon(Icons.play_arrow),
+                              color: Theme.of(context).colorScheme.background,
+                            );
+                    },
+                  ),
                 ),
-                IconButton(
-                    iconSize: (IconTheme.of(context).size ?? 24.0) * 2,
-                    onPressed: _next,
-                    icon: const Icon(Icons.skip_next)),
+
+                /// Previous button
+                StreamBuilder(
+                    stream: _player.currentIndexStream,
+                    builder: ((context, snapshot) {
+                      return IconButton(
+                          iconSize: (IconTheme.of(context).size ?? 24.0) * 2,
+                          onPressed: _player.hasNext ? _next : null,
+                          icon: const Icon(Icons.skip_next));
+                    })),
               ],
             ),
             Row(
