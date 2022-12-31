@@ -18,9 +18,6 @@ class PlayerScreen extends StatefulWidget {
 
 class _PlayerScreenState extends State<PlayerScreen> {
   int curIdx = 0;
-  bool _paused = false;
-  bool _shuffleEnabled = false;
-  LoopMode _loopMode = LoopMode.all;
   late AudioPlayer _player;
 
   @override
@@ -28,7 +25,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     super.initState();
 
     _player = AudioPlayer();
-    _player.setLoopMode(LoopMode.all).then((value) {
+    _player.setLoopMode(LoopMode.off).then((value) {
       _player.setAudioSource(widget.playQueue.playlist,
           initialIndex: 0, initialPosition: Duration.zero);
     }).then((value) => _player.play());
@@ -45,23 +42,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _toggleShuffle() async {
-    setState(() {
-      _shuffleEnabled = !_shuffleEnabled;
-    });
-    await _player.setShuffleModeEnabled(_shuffleEnabled);
+    await _player.setShuffleModeEnabled(!_player.shuffleModeEnabled);
+    setState(() {});
   }
 
   void _toggleLoopMode() async {
-    setState(() {
-      if (_loopMode == LoopMode.off) {
-        _loopMode = LoopMode.all;
-      } else if (_loopMode == LoopMode.all) {
-        _loopMode = LoopMode.one;
-      } else {
-        _loopMode = LoopMode.off;
-      }
-    });
-    await _player.setLoopMode(_loopMode);
+    if (_player.loopMode == LoopMode.off) {
+      await _player.setLoopMode(LoopMode.all);
+    } else if (_player.loopMode == LoopMode.all) {
+      await _player.setLoopMode(LoopMode.one);
+    } else {
+      await _player.setLoopMode(LoopMode.off);
+    }
+    setState(() {});
   }
 
   void _pause() {
@@ -72,12 +65,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _player.play();
   }
 
-  void _next() {
-    _player.seekToNext();
+  void _next() async {
+    await _player.seekToNext();
+    setState(() {});
   }
 
-  void _prev() {
-    _player.seekToPrevious();
+  void _prev() async {
+    await _player.seekToPrevious();
+    setState(() {});
   }
 
   @override
@@ -105,6 +100,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            /// Title
             StreamBuilder<int?>(
               stream: _player.currentIndexStream,
               builder: ((context, snapshot) {
@@ -117,6 +113,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 );
               }),
             ),
+
+            /// Progress bar
             Container(
               margin: const EdgeInsets.all(16.0),
               child: StreamBuilder<Duration>(
@@ -188,36 +186,51 @@ class _PlayerScreenState extends State<PlayerScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  decoration: ShapeDecoration(
-                      shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10))),
-                      color: _shuffleEnabled
-                          ? Theme.of(context).colorScheme.onBackground
-                          : Theme.of(context).colorScheme.background),
-                  child: IconButton(
-                    onPressed: _toggleShuffle,
-                    color: _shuffleEnabled
-                        ? Theme.of(context).colorScheme.background
-                        : Theme.of(context).colorScheme.onBackground,
-                    icon: const Icon(Icons.shuffle),
-                  ),
-                ),
-                Container(
-                  decoration: ShapeDecoration(
-                      shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10))),
-                      color: _loopMode == LoopMode.off
-                          ? Theme.of(context).colorScheme.background
-                          : Theme.of(context).colorScheme.onBackground),
-                  child: IconButton(
-                      onPressed: _toggleLoopMode,
-                      color: _loopMode == LoopMode.off
-                          ? Theme.of(context).colorScheme.onBackground
-                          : Theme.of(context).colorScheme.background,
-                      icon: _loopMode == LoopMode.one
-                          ? const Icon(Icons.repeat_one)
-                          : const Icon(Icons.repeat)),
+                /// Shuffle Button
+                StreamBuilder(
+                    stream: _player.shuffleModeEnabledStream,
+                    builder: ((context, snapshot) {
+                      return Container(
+                        decoration: ShapeDecoration(
+                            shape: const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10))),
+                            color: snapshot.data ?? false
+                                ? Theme.of(context).colorScheme.onBackground
+                                : Theme.of(context).colorScheme.background),
+                        child: IconButton(
+                          onPressed: _toggleShuffle,
+                          color: snapshot.data ?? false
+                              ? Theme.of(context).colorScheme.background
+                              : Theme.of(context).colorScheme.onBackground,
+                          icon: const Icon(Icons.shuffle),
+                        ),
+                      );
+                    })),
+
+                /// Loop Button
+                StreamBuilder(
+                  stream: _player.loopModeStream,
+                  builder: (context, snapshot) {
+                    final loopMode = snapshot.data ?? LoopMode.off;
+                    return Container(
+                      decoration: ShapeDecoration(
+                          shape: const RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10))),
+                          color: loopMode == LoopMode.off
+                              ? Theme.of(context).colorScheme.background
+                              : Theme.of(context).colorScheme.onBackground),
+                      child: IconButton(
+                          onPressed: _toggleLoopMode,
+                          color: loopMode == LoopMode.off
+                              ? Theme.of(context).colorScheme.onBackground
+                              : Theme.of(context).colorScheme.background,
+                          icon: loopMode == LoopMode.one
+                              ? const Icon(Icons.repeat_one)
+                              : const Icon(Icons.repeat)),
+                    );
+                  },
                 ),
               ],
             ),
