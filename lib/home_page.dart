@@ -57,7 +57,7 @@ class MyHomePage extends StatelessWidget {
             ? PlaylistView(queue: queue)
             : const Text(
                 "Queue is empty :(",
-                textScaleFactor: 1.25,
+                textScaler: TextScaler.linear(1.25),
               ),
       ),
       floatingActionButton: FloatingActionButton(
